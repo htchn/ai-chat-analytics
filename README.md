@@ -1,3 +1,5 @@
+[📖 中文版文档](README_CN.md)
+
 # 🤖 AI Chat Analytics
 
 > A complete user behavior analytics pipeline for conversational AI products, from raw event data to actionable product insights.

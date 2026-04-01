@@ -1,3 +1,5 @@
+[📖 English Version](README.md)
+
 # 🤖 AI Chat Analytics
 
 > 一套完整的对话式AI产品用户行为分析流水线，从原始事件数据到可执行的产品优化建议。
