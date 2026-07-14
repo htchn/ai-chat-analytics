@@ -1,250 +1,291 @@
-[📖 中文版文档](README_CN.md)
+<div align="center">
 
-# 🤖 AI Chat Analytics
+# 💬 AI Chat Analytics
 
-> A complete user behavior analytics pipeline for conversational AI products, from raw event data to actionable product insights.
+### *Turn synthetic conversation events into inspectable product-quality findings.*
 
-## 🎯 What is This?
+[![License](https://img.shields.io/badge/License-MIT-EAB308.svg)](LICENSE) [![Kernel](https://img.shields.io/badge/Kernel-Python%203.13.5-3776AB?logo=python&logoColor=white)](notebooks/01_data_generation.ipynb) [![Jupyter](https://img.shields.io/badge/Jupyter-5%20notebooks-F37626?logo=jupyter&logoColor=white)](notebooks) [![Data](https://img.shields.io/badge/Data-synthetic-0D9488)](#data-and-privacy) [![Stars](https://img.shields.io/github/stars/okht/ai-chat-analytics?style=social)](https://github.com/okht/ai-chat-analytics)
 
-If you build a ChatGPT/Claude-like product, your users will chat, like 👍, dislike 👎, retry 🔄, and follow up 💬 — or just leave silently 🤐. **How do you turn these signals into product decisions?**
+[![Users](https://img.shields.io/badge/Users-500-F97316)](data/users.csv) [![Conversations](https://img.shields.io/badge/Conversations-22%2C394-2563EB)](data/conversations.csv) [![Events](https://img.shields.io/badge/Events-19%2C952-16A34A)](data/events.csv) [![Real user data](https://img.shields.io/badge/Real%20user%20data-not%20included-EF4444)](#data-and-privacy)
 
-This project demonstrates a full analytics framework that answers:
+<br>
 
-- 📊 **How is overall quality?** — Behavior distributions, satisfaction rates
-- 🔍 **Where are the problems?** — Per-scenario quality breakdown
-- ❓ **Why are users unhappy?** — Semantic root-cause attribution
-- 💬 **What do follow-ups really mean?** — Exploratory vs. corrective signal decomposition
-- 🎯 **What should we fix first?** — Prioritized optimization recommendations
+<table>
+<tr><td align="left">
 
----
+📭 &nbsp;5,394 silent conversations disappear when analysis starts from events alone.<br>
+🔀 &nbsp;Retries and follow-ups carry different meanings across six intent scenarios.<br>
+🔎 &nbsp;71.2% of rule-labeled bad cases fall into one catch-all quality bucket.
 
-## 🧠 Thinking Chain & Tree
+</td></tr>
+</table>
 
-### Overview
+### ✨ Link behavior metrics, rule-based attribution, follow-up signals, and prioritization to one committed synthetic snapshot.
 
-```mermaid
-graph TD
-    Q0{"🤔 Is the product<br/>working well?"}
-    Q0 --> M["📊 02 Behavior Metrics<br/>How to measure?"]
-    M --> Q1{"Where are<br/>the problems?"}
-    Q1 --> S["🔍 02 Scenario Breakdown<br/>Which intents hurt most?"]
-    S --> Q2{"Why are users<br/>unhappy?"}
-    Q2 --> A["🔬 03 Semantic Attribution<br/>Root cause analysis"]
-    Q2 --> F["💬 04 Follow-up Decomposition<br/>Hidden signal mining"]
-    A --> Q3{"What should<br/>we fix first?"}
-    F --> Q3
-    Q3 --> R["🎯 05 Priority Matrix<br/>+ Monitoring System"]
+**Synthetic templates → committed CSV snapshot → behavior, attribution, and follow-up analyses → product priorities**
 
-    style Q0 fill:#6366f1,stroke:#4f46e5,color:#fff
-    style Q1 fill:#f97316,stroke:#ea580c,color:#fff
-    style Q2 fill:#e74c3c,stroke:#dc2626,color:#fff
-    style Q3 fill:#2ecc71,stroke:#16a34a,color:#fff
-    style M fill:#ede9fe,stroke:#6366f1,color:#333
-    style S fill:#fff7ed,stroke:#f97316,color:#333
-    style A fill:#fee2e2,stroke:#e74c3c,color:#333
-    style F fill:#dbeafe,stroke:#3498db,color:#333
-    style R fill:#dcfce7,stroke:#2ecc71,color:#333
-```
+<br>
 
-### Branch 1 — "Is the product working well?" → Behavior Metrics
+[📊 Snapshot](#snapshot) · [🧭 Analysis tracks](#analysis-tracks) · [📈 Results](#results) · [🗺️ Workflow](#workflow) · [🚀 Reproduce](#reproduce) · [🔬 Methodology](#methodology) · [🔐 Data & privacy](#data-and-privacy) · [🧪 Verification](#verification) · [📁 Structure](#project-structure) · [📌 Limitations](#limitations) · [📝 Notes](#notes)
 
-```mermaid
-graph TD
-    ROOT["📊 How to measure<br/>product quality?"]
-    ROOT --> EXPLICIT["Explicit Signals"]
-    ROOT --> IMPLICIT["Implicit Signals"]
-    ROOT --> TIME["Time Dimension"]
-    ROOT --> USER["User Dimension"]
+[**English**](README.md) · [**简体中文**](README_CN.md) · [**Español**](README_ES.md) · [**Deutsch**](README_DE.md) · [**日本語**](README_JA.md) · [**Русский**](README_RU.md) · [**Português**](README_PT.md) · [**한국어**](README_KO.md)
 
-    EXPLICIT --> LIKE["👍 Like rate<br/>frequency count / total convs"]
-    EXPLICIT --> DISLIKE["👎 Dislike rate<br/>frequency count / total convs"]
-    EXPLICIT --> RETRY["🔄 Retry rate<br/>implicit negative — user unsatisfied<br/>but didn't explicitly dislike"]
-    EXPLICIT --> FOLLOWUP["💬 Follow-up rate<br/>ambiguous signal — good or bad?<br/>→ decomposed in notebook 04"]
-
-    IMPLICIT --> SILENT["🤫 Silent rate<br/>method: total convs − convs with events<br/>why: silent users absent from event table<br/>ignoring them inflates satisfaction metrics"]
-
-    TIME --> DAILY["Daily trends<br/>daily aggregation + multi-metric overlay<br/>purpose: detect spikes from model updates"]
-
-    USER --> ACTIVE["Active days<br/>group by user_type + box plot<br/>heavy / casual / churned"]
-    USER --> RETENTION["Retention curve<br/>day-level retention with eligible<br/>user filtering to avoid survivorship bias"]
-
-    ROOT --> FINDING["📋 Findings:<br/>24% silent, 14% dislike, 19% retry<br/>like rate ≈ silent rate → even satisfied<br/>users don't always give feedback"]
-
-    style ROOT fill:#6366f1,stroke:#4f46e5,color:#fff
-    style FINDING fill:#fef3c7,stroke:#f39c12,color:#333
-```
-
-### Branch 2 — "Where are the problems?" → Scenario Breakdown
-
-```mermaid
-graph TD
-    ROOT["🔍 Which scenarios<br/>have the most issues?"]
-
-    ROOT --> PREREQ["Prerequisite: Intent Classification"]
-    PREREQ --> IC1["This project: pre-classified field<br/>simulates classification model output"]
-    PREREQ --> IC2["Production: 4 methods<br/>keyword rules / LLM / BERT fine-tune / manual"]
-
-    ROOT --> METHOD["How to break down?"]
-    METHOD --> CROSS["Cross-tabulation<br/>pd.crosstab intent × event_type<br/>normalize='index' because conv volume<br/>differs per scenario — use ratios not counts"]
-    METHOD --> RANK["How to rank?<br/>dissatisfaction = dislike + retry<br/>why merge? retry is implicit negative"]
-
-    ROOT --> FINDING["📋 Findings"]
-    FINDING --> F1["🔴 Code Gen: 45.1%<br/>retry rate 30% drives dissatisfaction"]
-    FINDING --> F2["🔴 Knowledge QA: 39.3%<br/>dislike rate 24% is highest"]
-    FINDING --> F3["🟡 Data Analysis: 39.4%"]
-    FINDING --> F4["🟡 Creative Writing: 25.7%"]
-    FINDING --> F5["🟢 Translation: 19.8%"]
-    FINDING --> F6["🟢 Chitchat: 9.7%<br/>65% silent but expected for scenario"]
-
-    style ROOT fill:#f97316,stroke:#ea580c,color:#fff
-    style FINDING fill:#fef3c7,stroke:#f39c12,color:#333
-```
-
-### Branch 3 — "Why are users unhappy?" → Semantic Attribution
-
-```mermaid
-graph TD
-    ROOT["🔬 Root cause analysis<br/>for 7,363 bad cases"]
-
-    ROOT --> TAXONOMY["Attribution Taxonomy — 5 categories"]
-    TAXONOMY --> T1["🟥 Hallucination<br/>fabricated facts / people / papers"]
-    TAXONOMY --> T2["🟧 Off-topic<br/>misunderstood user intent"]
-    TAXONOMY --> T3["🟪 Refusal<br/>over-safety, refused answerable questions"]
-    TAXONOMY --> T4["🟩 Format mismatch<br/>wanted code, got text explanation"]
-    TAXONOMY --> T5["📘 Quality insufficient<br/>right direction but too vague — catch-all"]
-
-    ROOT --> PATHA["Path A: Keyword Rules<br/>+ Manual Review"]
-    PATHA --> PA1["Step 1: Priority rule chain<br/>refusal keywords → hallucination signals<br/>→ format check → off-topic signals<br/>→ fallback: quality insufficient"]
-    PATHA --> PA2["Step 2: Manual review<br/>export CSV → annotator checks rule output<br/>focus: reclassify catch-all cases<br/>QC: dual annotation + Cohen's Kappa"]
-    PATHA --> PA3["Limitation: 71% falls to catch-all<br/>translation and chitchat: 100% catch-all"]
-
-    ROOT --> PATHB["Path B: LLM Auto-labeling"]
-    PATHB --> PB1["Method: zero-shot prompt classification<br/>input: query + response → prompt template<br/>→ returns attribution category"]
-    PATHB --> PB2["Model: gpt-4o-mini<br/>temperature=0 for reproducibility"]
-    PATHB --> PB3["Validation: use Path A manual<br/>labels as golden set"]
-
-    ROOT --> FINDING["📋 Findings"]
-    FINDING --> F1["Knowledge QA → hallucination 22%"]
-    FINDING --> F2["Data Analysis → format mismatch 65%"]
-    FINDING --> F3["Creative Writing → refusal 23%"]
-    FINDING --> F4["Code Gen → refusal 12% + format 13%"]
-
-    style ROOT fill:#e74c3c,stroke:#dc2626,color:#fff
-    style FINDING fill:#fef3c7,stroke:#f39c12,color:#333
-```
-
-### Branch 4 — "Are follow-ups good or bad?" → Signal Decomposition
-
-```mermaid
-graph TD
-    ROOT["💬 Follow-up rate 19.4%<br/>is this good or bad?"]
-
-    ROOT --> WHY["Why decompose?<br/>follow-up is ambiguous — could be<br/>curiosity OR frustration"]
-
-    ROOT --> HOW["How to classify?"]
-    HOW --> CORRECTIVE["🔴 Corrective<br/>keyword detection: negation words,<br/>contradiction signals, correction phrases"]
-    HOW --> EXPLORATORY["🟢 Exploratory<br/>default: no corrective keywords found"]
-    HOW --> PROD["Production improvement:<br/>replace keywords with LLM<br/>sentiment/intent classification"]
-
-    ROOT --> SCENE["Scene correlation<br/>cross-analysis: intent × followup_type"]
-    ROOT --> BEHAVIOR["Behavior correlation<br/>temporal event chain:<br/>sort by timestamp → get first event<br/>after follow-up"]
-
-    ROOT --> FINDING["📋 Findings"]
-    FINDING --> F1["Knowledge QA: 64% corrective 🚨<br/>confirms hallucination problem from 03"]
-    FINDING --> F2["Creative Writing: only 10% corrective<br/>follow-ups are mostly positive exploration"]
-    FINDING --> F3["Insight: corrective follow-ups can serve<br/>as automated quality monitoring signal"]
-
-    style ROOT fill:#3498db,stroke:#2563eb,color:#fff
-    style FINDING fill:#fef3c7,stroke:#f39c12,color:#333
-```
-
-### Branch 5 — "What should we fix first?" → Priority Matrix
-
-```mermaid
-graph TD
-    ROOT["🎯 Prioritization"]
-    ROOT --> LOGIC["Ranking logic:<br/>dissatisfaction rate × corrective rate<br/>× attribution severity"]
-
-    ROOT --> P0["🔴 P0 — Fix immediately"]
-    P0 --> P0A["Knowledge QA<br/>root cause: hallucination<br/>action: integrate RAG + confidence detection<br/>when low confidence → flag as uncertain"]
-    P0 --> P0B["Code Generation<br/>root cause: refusal + bad output<br/>action: code sandbox + prompt optimization<br/>give code directly, not just ideas"]
-
-    ROOT --> P1["🟡 P1 — Short-term"]
-    P1 --> P1A["Data Analysis<br/>root cause: format mismatch<br/>action: default to code-block output<br/>give solution first, ask questions later"]
-    P1 --> P1B["Creative Writing<br/>root cause: over-safety<br/>action: relax safety for creative tasks<br/>style imitation ≠ copyright infringement"]
-
-    ROOT --> P2["🟢 P2 — Monitor"]
-    P2 --> P2A["Translation — stable, keep watching"]
-    P2 --> P2B["Chitchat — high silence is expected"]
-
-    ROOT --> MONITOR["📡 Monitoring System"]
-    MONITOR --> MON1["Daily: DAU, retention,<br/>dislike rate, retry rate"]
-    MONITOR --> MON2["Weekly: per-scenario dissatisfaction,<br/>attribution distribution, corrective rate"]
-    MONITOR --> MON3["Alerts: dislike rate daily +5%<br/>hallucination share >15%<br/>any scenario dissatisfaction >50%"]
-
-    style ROOT fill:#2ecc71,stroke:#16a34a,color:#fff
-    style P0 fill:#fee2e2,stroke:#e74c3c,color:#333
-    style P1 fill:#fef3c7,stroke:#f39c12,color:#333
-    style P2 fill:#dcfce7,stroke:#2ecc71,color:#333
-```
+</div>
 
 ---
 
-## 📁 Project Structure
+<a id="snapshot"></a>
+## 📊 Snapshot
 
+AI Chat Analytics is a five-notebook research example for studying product signals in conversational AI. The committed snapshot is generated from fixed templates with NumPy and Python random seeds set to `42`.
+
+| Dataset | Rows | Scope |
+|---|---:|---|
+| **Users** | 500 | Anonymous synthetic IDs across heavy, casual, and churned cohorts |
+| **Conversations** | 22,394 | Six preassigned intent scenarios from 2025-03-01 through 2025-03-31 |
+| **Events** | 19,952 | Like, dislike, retry, and follow-up events |
+| **Bad cases** | 7,363 | Conversations whose first event is dislike or retry |
+
+The snapshot contains 5,394 conversations with no event. Those silent conversations account for 24.1% of all conversations and remain part of the denominator.
+
+---
+
+<a id="analysis-tracks"></a>
+## 🧭 Analysis tracks
+
+| Notebook | Question | Method | Current artifact |
+|---|---|---|---|
+| **01 · Data generation** | What can be studied without private product data? | Seeded templates, user cohorts, scenario-specific event probabilities | Three committed CSV files |
+| **02 · Behavior analysis** | What does the first observed behavior show? | Event distribution, scenario cross-tabs, activity, retention, and daily trends | Notebook code; no saved execution output |
+| **03 · Semantic attribution** | Why do dislike and retry cases occur? | Five-label keyword rules plus a pending manual-review column | `output/bad_cases_for_labeling.csv` |
+| **04 · Follow-up signals** | Which follow-ups look corrective? | Keyword split and scenario comparison | Notebook code; no saved execution output |
+| **05 · Insights summary** | Which scenarios appear most urgent in this snapshot? | Recomputed metrics and priority cards | Notebook code; no saved execution output |
+
+The optional LLM attribution path in notebook 03 is an unexecuted template. The committed repository contains no LLM-generated labels.
+
+---
+
+<a id="results"></a>
+## 📈 Results from the committed snapshot
+
+The following values were recalculated directly from the committed CSV files.
+
+### First-event distribution
+
+| First behavior | Conversations | Share |
+|---|---:|---:|
+| **Like** | 5,302 | 23.7% |
+| **Dislike** | 3,165 | 14.1% |
+| **Retry** | 4,198 | 18.7% |
+| **Follow-up** | 4,335 | 19.4% |
+| **Silent** | 5,394 | 24.1% |
+
+### Scenario view
+
+`Dissatisfaction = dislike share + retry share`, using the first event for each conversation.
+
+| Scenario | Conversations | Dissatisfaction |
+|---|---:|---:|
+| **Code generation** | 5,615 | 45.1% |
+| **Data analysis** | 2,264 | 39.4% |
+| **Knowledge Q&A** | 5,602 | 39.3% |
+| **Creative writing** | 3,325 | 25.7% |
+| **Translation** | 3,354 | 19.8% |
+| **Chitchat** | 2,234 | 9.8% |
+
+### Rule attribution and follow-ups
+
+| Finding | Value | Interpretation boundary |
+|---|---:|---|
+| **Catch-all quality label** | 71.2% | Rule coverage is limited; this is not a validated root-cause rate |
+| **Format mismatch** | 12.4% | Rule-assigned share of 7,363 bad cases |
+| **Refusal** | 6.8% | Rule-assigned share of 7,363 bad cases |
+| **Hallucination** | 6.7% | Rule-assigned share of 7,363 bad cases |
+| **Corrective follow-ups** | 40.2% | Keyword-classified share of 4,335 follow-up events |
+| **Knowledge Q&A corrective share** | 63.5% | Scenario-specific keyword result |
+
+All 7,363 rows have a rule label. The `attribution_manual` column remains empty for every row.
+
+---
+
+<a id="workflow"></a>
+## 🗺️ Workflow
+
+```mermaid
+flowchart LR
+    A([Synthetic templates]) --> B[01 Generate] --> C[(Committed CSV snapshot)]
+
+    C --> D[02 Behavior] --> E[Rates and retention] --> L([Inspectable findings])
+    C --> F[03 Attribution] --> G[Rule labels] --> L
+    G -.-> H[Manual review pending]
+    C --> I[04 Follow-ups and 05 Summary] --> J[Signals and priorities] --> L
+
+    style A fill:#FEF3C7,stroke:#F59E0B,stroke-width:2px,color:#000,font-size:12px
+    style B fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px,color:#000,font-size:12px
+    style C fill:#EDE9FE,stroke:#8B5CF6,stroke-width:2px,color:#000,font-size:12px
+    style D fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px,color:#000,font-size:12px
+    style E fill:#F1F5F9,stroke:#64748B,stroke-width:1px,color:#000,font-size:12px
+    style F fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px,color:#000,font-size:12px
+    style G fill:#F1F5F9,stroke:#64748B,stroke-width:1px,color:#000,font-size:12px
+    style H fill:#FEF2F2,stroke:#EF4444,stroke-width:1px,color:#000,font-size:12px
+    style I fill:#DBEAFE,stroke:#3B82F6,stroke-width:2px,color:#000,font-size:12px
+    style J fill:#F1F5F9,stroke:#64748B,stroke-width:1px,color:#000,font-size:12px
+    style L fill:#DCFCE7,stroke:#22C55E,stroke-width:2px,color:#000,font-size:12px
 ```
-ai-chat-analytics/
-├── README.md                          # English (default)
-├── README_CN.md                       # 中文版
-├── requirements.txt
-├── data/
-│   ├── users.csv                      # 500 simulated users
-│   ├── conversations.csv              # ~22K conversations
-│   └── events.csv                     # ~20K behavioral events
-├── notebooks/
-│   ├── 01_data_generation.ipynb       # Synthetic data with realistic patterns
-│   ├── 02_behavior_analysis.ipynb     # Multi-dimensional behavior metrics
-│   ├── 03_semantic_attribution.ipynb  # Bad case root-cause analysis
-│   ├── 04_followup_signal.ipynb       # Follow-up type decomposition
-│   └── 05_insights_summary.ipynb      # Actionable recommendations
-├── src/
-│   └── utils.py                       # Shared utilities
-└── output/
-    └── bad_cases_for_labeling.csv     # Exported for manual annotation
-```
 
-## ⚡ Quick Start
+Notebook 05 reads the committed CSV files directly and recomputes its summary. It does not consume saved outputs from notebooks 02–04.
 
-```bash
-# Clone
-git clone https://github.com/gh59/ai-chat-analytics.git
+---
+
+<a id="reproduce"></a>
+## 🚀 Reproduce
+
+Clone the repository and install the dependencies explicitly. The tracked `requirements.txt` is currently empty.
+
+```powershell
+git clone https://github.com/okht/ai-chat-analytics.git
 cd ai-chat-analytics
 
-# Install dependencies
-pip install -r requirements.txt
+python -m venv .venv
+# Activate the environment for your shell, then run:
+python -m pip install pandas numpy plotly jupyter
+```
 
-# Run notebooks in order
+Open Jupyter from the `notebooks` directory because the notebooks use relative paths such as `../data` and `../output`.
+
+```powershell
 cd notebooks
-jupyter notebook 01_data_generation.ipynb
+jupyter notebook
 ```
 
-## 📦 Requirements
+Run the notebooks in this order:
 
+1. `01_data_generation.ipynb`
+2. `02_behavior_analysis.ipynb`
+3. `03_semantic_attribution_analysis.ipynb`
+4. `04_follow_up_signal_analysis.ipynb`
+5. `05_insights_summary.ipynb`
+
+> 📌 Run the full sequence in a fresh clone when comparing results. Notebook 01 rewrites the committed files in `data/`, and notebook 03 rewrites `output/bad_cases_for_labeling.csv`.
+
+The core path requires no OpenAI key. Notebook 03 also contains an optional, commented LLM-labeling template; enabling it requires a separately configured SDK and credential.
+
+---
+
+<a id="methodology"></a>
+## 🔬 Methodology
+
+| Stage | Current rule | Consequence |
+|---|---|---|
+| **Intent** | One of six intent labels is assigned during synthetic generation | Intent classification accuracy is outside this repository's evidence |
+| **Primary behavior** | The earliest event becomes the conversation's primary behavior | Later events remain available but do not define the headline rates |
+| **Silence** | A conversation with no event is counted as silent | Event-only analysis would omit 5,394 conversations |
+| **Bad case** | The first event is dislike or retry | The committed bad-case set contains 7,363 conversations |
+| **Dissatisfaction** | Dislike share plus retry share | This is a project-defined diagnostic metric |
+| **Attribution** | Ordered keyword rules assign one of five labels | 71.2% reaches the catch-all quality label |
+| **Follow-up type** | Corrective keywords split follow-ups from the exploratory default | The split reflects the templates and rules in this snapshot |
+
+The rule labels are pre-annotations for review. They have not been validated against human labels or an LLM-generated golden set.
+
+---
+
+<a id="data-and-privacy"></a>
+## 🔐 Data and privacy
+
+| File | Fields | Public-data role |
+|---|---|---|
+| **`data/users.csv`** | Synthetic ID, cohort, signup date | Anonymous user fixture |
+| **`data/conversations.csv`** | Conversation, user, session, time, intent, query, response | Template-generated conversation fixture |
+| **`data/events.csv`** | Event, conversation, type, time, follow-up text | Template-generated event stream |
+| **`output/bad_cases_for_labeling.csv`** | Bad case, rule label, empty manual label | Review worksheet generated by notebook 03 |
+
+- No real user data, account identifiers, emails, or private product logs are included.
+- The synthetic IDs do not connect to ChatGPT, Claude, or any other service account.
+- The core notebook path reads local CSV files and makes no network request.
+- The `sk-xxx` text in notebook 03 is a placeholder inside an unexecuted optional template.
+- Adapting this workflow to real product data requires a separate privacy, consent, retention, and access-control review.
+
+---
+
+<a id="verification"></a>
+## 🧪 Verification
+
+| Check | Current evidence |
+|---|---|
+| **Notebook syntax** | All 29 code cells parse as Python |
+| **Saved execution state** | Notebook 01 has saved outputs; notebooks 02–05 do not |
+| **Primary keys** | User, conversation, and event IDs are unique |
+| **References** | Every conversation user and event conversation resolves |
+| **Event timing** | No event precedes its conversation timestamp |
+| **Manual labels** | 0 of 7,363 rows completed |
+| **Automated tests** | No automated test suite is included |
+
+The result tables in this README were checked against the committed CSV snapshot. They do not represent a production benchmark.
+
+---
+
+<a id="project-structure"></a>
+## 📁 Project structure
+
+```text
+ai-chat-analytics/
+├── README.md
+├── README_CN.md
+├── README_ES.md
+├── README_DE.md
+├── README_JA.md
+├── README_RU.md
+├── README_PT.md
+├── README_KO.md
+├── LICENSE
+├── requirements.txt                  # currently empty
+├── data/
+│   ├── users.csv
+│   ├── conversations.csv
+│   └── events.csv
+├── notebooks/
+│   ├── 01_data_generation.ipynb
+│   ├── 02_behavior_analysis.ipynb
+│   ├── 03_semantic_attribution_analysis.ipynb
+│   ├── 04_follow_up_signal_analysis.ipynb
+│   └── 05_insights_summary.ipynb
+├── output/
+│   └── bad_cases_for_labeling.csv
+└── src/
+    └── utils.py                      # currently empty
 ```
-pandas
-numpy
-plotly
-jupyter
-```
 
-## 🧩 Design Philosophy
+---
 
-1. **No pre-labeled data** — Intent classification and attribution labels are NOT baked into synthetic data. The pipeline demonstrates how to derive them, matching real-world conditions.
+<a id="limitations"></a>
+## 📌 Limitations
 
-2. **Event stream, not single labels** — One conversation can trigger multiple events (retry → like). This mirrors real product instrumentation.
+- Every committed row is synthetic; real-user behavior may differ materially.
+- Intent labels are assigned during data generation and do not evaluate an intent classifier.
+- Dependencies are not pinned, and `requirements.txt` is empty.
+- `src/utils.py` is empty; the notebooks contain the active analysis code.
+- Notebooks 02–05 have no saved execution outputs in the committed snapshot.
+- The manual-label column is empty, so rule-attribution accuracy is unknown.
+- The optional LLM path is an unexecuted template and has no committed result.
+- No automated tests, CI workflow, release, or compatibility matrix is included.
 
-3. **Silence is data** — 24% of conversations have zero feedback. Ignoring them biases your quality metrics upward.
+---
 
-4. **Follow-ups are ambiguous** — A high follow-up rate could mean high engagement OR high frustration. You must decompose before interpreting.
+<a id="notes"></a>
+## 📝 Notes
 
-5. **Attribution needs multiple paths** — Keyword rules are fast but shallow; LLM labeling is smart but costly; manual labeling is accurate but unscalable. A production system needs all three.
+Use the committed findings as an inspectable example of metric construction and analysis boundaries. Revalidate every assumption before adapting the workflow to another dataset.
+
+Issues and pull requests are welcome.
+
+---
+
+<div align="center">
+
+**Keep every product recommendation traceable to its data and assumptions.**
+
+<br>
+
+MIT License · Maintained by [okht](https://github.com/okht)
+
+</div>
